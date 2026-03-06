@@ -59,6 +59,6 @@ Frontend: HTML, CSS (Modern UI v7), JavaScript
 
 Backend: PHP, MySQL
 
-[ServiceConnect Live Demo](https://serviceconnect.great-site.net)
+Hosted website: [https://serviceconnect.great-site.net](https://serviceconnect.great-site.net)
 
 Version Control: GitHub
