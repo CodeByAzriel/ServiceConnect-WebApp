@@ -1,101 +1,256 @@
 <?php
 session_start();
 include 'db.php';
-include 'header.php';
 
-if(!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin'){
+if(!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin'){
     header("Location: login.php");
-    exit;
+    exit();
 }
 
-// Fetch data
-$users = $conn->query("SELECT id, name, email, role, profile_pic FROM users ORDER BY name ASC")->fetch_all(MYSQLI_ASSOC);
-$categories = $conn->query("SELECT id, name FROM categories ORDER BY name ASC")->fetch_all(MYSQLI_ASSOC);
+/* Dashboard Stats */
+
+$totalUsers = $conn->query("SELECT COUNT(*) as total FROM users")->fetch_assoc()['total'];
+$totalServices = $conn->query("SELECT COUNT(*) as total FROM services")->fetch_assoc()['total'];
+
+/* Fetch Data */
+
+$users = $conn->query("SELECT id,name,email,role FROM users ORDER BY id DESC");
 $services = $conn->query("
-    SELECT s.id, s.title, s.price, s.status, u.name AS provider, u.profile_pic
-    FROM services s
-    JOIN users u ON u.id = s.provider_id
-    ORDER BY s.created_at DESC
-")->fetch_all(MYSQLI_ASSOC);
+SELECT services.id, services.title, services.category, users.name
+FROM services
+LEFT JOIN users ON services.user_id = users.id
+ORDER BY services.id DESC
+");
 ?>
 
-<div class="dashboard-container">
-    <h2>Admin Dashboard</h2>
-    <div class="tabs">
-        <button class="tablink" onclick="openTab(event,'users')">Users</button>
-        <button class="tablink" onclick="openTab(event,'categories')">Categories</button>
-        <button class="tablink" onclick="openTab(event,'services')">Services</button>
-    </div>
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Dashboard</title>
 
-    <!-- Users Tab -->
-    <div id="users" class="tabcontent">
-        <h3>All Users</h3>
-        <table class="dashboard-table">
-            <tr><th>Profile</th><th>Name</th><th>Email</th><th>Role</th><th>Actions</th></tr>
-            <?php foreach($users as $u): ?>
-            <tr>
-                <td><img src="<?= htmlspecialchars($u['profile_pic'] ?? 'images/default.png'); ?>" class="dashboard-pic" alt="Profile"></td>
-                <td><?= htmlspecialchars($u['name']); ?></td>
-                <td><?= htmlspecialchars($u['email']); ?></td>
-                <td><?= htmlspecialchars($u['role']); ?></td>
-                <td>
-                    <a href="edit_user.php?id=<?= $u['id']; ?>" class="btn secondary">Edit</a>
-                    <a href="delete_user.php?id=<?= $u['id']; ?>" class="btn danger" onclick="return confirm('Delete this user?')">Delete</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </table>
-    </div>
+<style>
 
-    <!-- Categories Tab -->
-    <div id="categories" class="tabcontent">
-        <h3>All Categories</h3>
-        <table class="dashboard-table">
-            <tr><th>Name</th><th>Actions</th></tr>
-            <?php foreach($categories as $c): ?>
-            <tr>
-                <td><?= htmlspecialchars($c['name']); ?></td>
-                <td>
-                    <a href="edit_category.php?id=<?= $c['id']; ?>" class="btn secondary">Edit</a>
-                    <a href="delete_category.php?id=<?= $c['id']; ?>" class="btn danger" onclick="return confirm('Delete this category?')">Delete</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </table>
-        <a href="add_category.php" class="btn primary">Add New Category</a>
-    </div>
+/* GENERAL */
 
-    <!-- Services Tab -->
-    <div id="services" class="tabcontent">
-        <h3>All Services</h3>
-        <table class="dashboard-table">
-            <tr><th>Provider</th><th>Profile</th><th>Title</th><th>Price (R)</th><th>Status</th><th>Actions</th></tr>
-            <?php foreach($services as $s): ?>
-            <tr>
-                <td><?= htmlspecialchars($s['provider']); ?></td>
-                <td><img src="uploads/<?= htmlspecialchars($s['profile_pic'] ?? 'default.png'); ?>" class="dashboard-pic" alt="Profile"></td>
-                <td><?= htmlspecialchars($s['title']); ?></td>
-                <td>R<?= number_format($s['price'],2); ?></td>
-                <td><?= htmlspecialchars($s['status']); ?></td>
-                <td>
-                    <a href="edit_service.php?id=<?= $s['id']; ?>" class="btn secondary">Edit</a>
-                    <a href="delete_service.php?id=<?= $s['id']; ?>" class="btn danger" onclick="return confirm('Delete this service?')">Delete</a>
-                </td>
-            </tr>
-            <?php endforeach; ?>
-        </table>
-        <a href="add_service.php" class="btn primary">Add New Service</a>
-    </div>
+body{
+font-family: 'Segoe UI', sans-serif;
+background:#f4f6f9;
+margin:0;
+padding:40px;
+color:#333;
+}
+
+h1{
+margin-bottom:25px;
+}
+
+/* DASHBOARD CARDS */
+
+.dashboard{
+display:flex;
+gap:25px;
+margin-bottom:40px;
+flex-wrap:wrap;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+width:220px;
+transition:0.2s;
+}
+
+.card:hover{
+transform:translateY(-3px);
+}
+
+.card h3{
+margin:0;
+font-size:18px;
+color:#666;
+}
+
+.card p{
+font-size:28px;
+margin:10px 0 0 0;
+font-weight:bold;
+}
+
+/* TABLES */
+
+.table-container{
+background:white;
+padding:25px;
+border-radius:10px;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+margin-bottom:40px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th{
+background:#f2f2f2;
+padding:12px;
+text-align:left;
+}
+
+td{
+padding:12px;
+border-bottom:1px solid #eee;
+}
+
+tr:hover{
+background:#fafafa;
+}
+
+/* BUTTONS */
+
+.btn{
+padding:7px 12px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-size:13px;
+}
+
+.delete{
+background:#ff4d4d;
+color:white;
+}
+
+.edit{
+background:#4a90e2;
+color:white;
+}
+
+.delete:hover{
+background:#e13c3c;
+}
+
+.edit:hover{
+background:#3b78c7;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Admin Dashboard</h1>
+
+<!-- Dashboard Stats -->
+
+<div class="dashboard">
+
+<div class="card">
+<h3>Total Users</h3>
+<p><?php echo $totalUsers; ?></p>
 </div>
 
-<script>
-function openTab(evt, tabName){
-    document.querySelectorAll(".tabcontent").forEach(t=>t.style.display="none");
-    document.querySelectorAll(".tablink").forEach(t=>t.classList.remove("active"));
-    document.getElementById(tabName).style.display="block";
-    evt.currentTarget.classList.add("active");
-}
-document.querySelector(".tablink").click();
-</script>
+<div class="card">
+<h3>Total Services</h3>
+<p><?php echo $totalServices; ?></p>
+</div>
 
-<?php include 'footer.php'; ?>
+</div>
+
+<!-- USERS TABLE -->
+
+<div class="table-container">
+
+<h2>Manage Users</h2>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Email</th>
+<th>Role</th>
+<th>Actions</th>
+</tr>
+
+<?php while($row = $users->fetch_assoc()): ?>
+
+<tr>
+
+<td><?php echo $row['id']; ?></td>
+<td><?php echo $row['name']; ?></td>
+<td><?php echo $row['email']; ?></td>
+<td><?php echo $row['role']; ?></td>
+
+<td>
+
+<a href="edit_user.php?id=<?php echo $row['id']; ?>">
+<button class="btn edit">Edit</button>
+</a>
+
+<a href="delete_user.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Delete user?')">
+<button class="btn delete">Delete</button>
+</a>
+
+</td>
+
+</tr>
+
+<?php endwhile; ?>
+
+</table>
+
+</div>
+
+
+<!-- SERVICES TABLE -->
+
+<div class="table-container">
+
+<h2>Manage Services</h2>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Service</th>
+<th>Category</th>
+<th>Provider</th>
+<th>Actions</th>
+</tr>
+
+<?php while($row = $services->fetch_assoc()): ?>
+
+<tr>
+
+<td><?php echo $row['id']; ?></td>
+<td><?php echo $row['title']; ?></td>
+<td><?php echo $row['category']; ?></td>
+<td><?php echo $row['name']; ?></td>
+
+<td>
+
+<a href="edit_service.php?id=<?php echo $row['id']; ?>">
+<button class="btn edit">Edit</button>
+</a>
+
+<a href="delete_service.php?id=<?php echo $row['id']; ?>" onclick="return confirm('Delete service?')">
+<button class="btn delete">Delete</button>
+</a>
+
+</td>
+
+</tr>
+
+<?php endwhile; ?>
+
+</table>
+
+</div>
+
+</body>
+</html>

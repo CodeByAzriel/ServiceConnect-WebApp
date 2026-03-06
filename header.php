@@ -23,25 +23,31 @@ session_start();
         <!-- Navigation Links -->
         <ul class="nav-links">
             <?php if(isset($_SESSION['user_id'])): ?>
-                <?php
-                // Check if user is admin
-                $role = $_SESSION['role'] ?? 'user';
-                ?>
-                
-                <li><a href="dashboard.php">Dashboard</a></li>
-                <?php if($role === 'admin'): ?>
-                    <li><a href="admin_dashboard.php">Admin Panel</a></li>
-                <?php endif; ?>
-                <li><a href="services.php">Services</a></li>
-                <li><a href="messages.php">Messages</a></li>
-                <li><a href="profile.php">Profile</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            <?php else: ?>
-                
-                <li><a href="services.php">Services</a></li>
-                <li><a href="login.php">Login</a></li>
-                <li><a href="register.php">Register</a></li>
-            <?php endif; ?>
+               
+   <?php if(isset($_SESSION['user_id'])): ?>
+    <?php if($_SESSION['role'] === 'admin'): ?>
+        <li><a href="admin_dashboard.php">Admin Dashboard</a></li>
+    <?php else: ?>
+        <li><a href="dashboard.php">Dashboard</a></li>
+        <li><a href="services.php">Services</a></li>
+    <?php endif; ?>
+    \
+    <li><a href="messages.php">Messages</a></li>
+    <li><a href="profile.php">Profile</a></li>
+    <li><a href="logout.php">Logout</a></li>
+<?php else: ?>
+    <li><a href="services.php">Services</a></li>
+    <li><a href="login.php">Login</a></li>
+    <li><a href="register.php">Register</a></li>
+
+    <?php endif; ?>
+
+<?php else: ?>
+    <!-- Guests -->
+    <li><a href="services.php">Services</a></li>
+    <li><a href="login.php">Login</a></li>
+    <li><a href="register.php">Register</a></li>
+<?php endif; ?>
         </ul>
 
         <!-- Optional Hamburger for mobile -->

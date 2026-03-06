@@ -1,0 +1,178 @@
+/* ================================
+   ServiceConnect Modern UI v7
+   ================================ */
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Root variables */
+:root {
+    --primary: #4F6DF5;
+    --secondary: #1BC5BD;
+    --accent: #FFCA28;
+    --bg: #F5F7FA;
+    --card-bg: #FFFFFF;
+    --text: #212529;
+    --subtext: #6C757D;
+    --radius: 12px;
+    --transition: 0.35s;
+    --header-height: 70px;
+}
+/* Login to Book Button */
+.btn.login-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+}
+
+.btn.login-btn:hover {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+}
+/* Reset */
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Inter','Poppins',sans-serif; background: var(--bg); color: var(--text); line-height:1.6; }
+
+/* ================= Navbar ================= */
+.navbar {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0 2rem; height: var(--header-height); background:#fff;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08); position:sticky; top:0; z-index:1000;
+}
+.logo-img { height:60px; width:auto; filter: brightness(1.2); transition: transform 0.3s; }
+.logo-img:hover { transform: scale(1.1); }
+.nav-links { display:flex; list-style:none; gap:1.5rem; align-items:center; }
+.nav-links a { text-decoration:none; color: var(--text); font-weight:500; padding:0.5rem 0.7rem; transition: all var(--transition); display:block; }
+.nav-links a:hover { color: var(--primary); }
+
+/* Dropdown menu */
+.dropdown:hover .dropdown-menu { display:block; }
+.dropdown-menu {
+    display:none; position:absolute; top:100%; left:0; background:#fff;
+    box-shadow:0 8px 20px rgba(0,0,0,0.12); border-radius: var(--radius);
+    min-width:200px; overflow:hidden; z-index:10;
+}
+.dropdown-menu li a { padding:0.8rem 1rem; color: var(--text); font-weight:400; }
+.dropdown-menu li a:hover { background: var(--primary); color:#fff; }
+
+/* Hamburger */
+.hamburger { display:none; flex-direction:column; cursor:pointer; gap:5px; }
+.hamburger span { height:3px; width:25px; background: var(--text); border-radius:2px; transition: all var(--transition); }
+.hamburger.toggle span:nth-child(1){ transform: rotate(45deg) translate(5px,5px);}
+.hamburger.toggle span:nth-child(2){ opacity:0; }
+.hamburger.toggle span:nth-child(3){ transform: rotate(-45deg) translate(5px,-5px); }
+
+/* ================= Hero ================= */
+.hero { display:flex; align-items:center; justify-content:space-between; padding:4rem 2rem; background: linear-gradient(135deg, #E0ECFF, #fff); border-radius: var(--radius); margin:2rem; position:relative; }
+.hero::before {
+    content:""; position:absolute; right:2rem; top:50%; transform:translateY(-50%);
+    width:500px; height:400px; background:url('../images/hero-pc.png') no-repeat center/contain; z-index:0; opacity:0.35;
+}
+.hero-text { max-width:600px; text-align:left; z-index:1; }
+.hero h1 { font-size:2.8rem; margin-bottom:1rem; font-weight:700; }
+.hero p { font-size:1.2rem; margin-bottom:2rem; color: var(--subtext); }
+
+/* ================= Search ================= */
+.search-form { display:flex; max-width:100%; margin-bottom:1rem; z-index:1; }
+.search-form input { flex:1; padding:0.8rem 1rem; border-radius: var(--radius) 0 0 var(--radius); border:1px solid #ccc; font-size:1rem; transition: all var(--transition); }
+.search-form input:focus { border-color: var(--primary); outline:none; }
+.search-form button { border:none; background: var(--primary); color:#fff; padding:0.8rem 1.5rem; font-weight:600; border-radius:0 var(--radius) var(--radius) 0; cursor:pointer; transition: all var(--transition); }
+.search-form button:hover { background: var(--secondary); }
+
+/* ================= Categories ================= */
+.categories { display:flex; justify-content:flex-start; gap:1rem; flex-wrap:wrap; margin-top:1rem; z-index:1; }
+.categories a {
+    padding:0.55rem 1.2rem; background: var(--primary); color:#fff; font-weight:600; border-radius: var(--radius); text-decoration:none;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08); transition: all var(--transition);
+}
+.categories a:hover { background: var(--secondary); transform: translateY(-3px); box-shadow:0 8px 20px rgba(0,0,0,0.12); }
+
+/* ================= Features & Cards ================= */
+.features, .cards-container { display:flex; flex-wrap:wrap; gap:2rem; justify-content:center; margin:2rem; }
+.feature-card, .card, .service-card, .pro-card, .booking-card {
+    background: var(--card-bg); padding:1.8rem; border-radius: var(--radius); box-shadow:0 4px 12px rgba(0,0,0,0.08);
+    transition: transform var(--transition), box-shadow var(--transition); text-align:center;
+}
+.feature-card:hover, .card:hover, .service-card:hover, .pro-card:hover, .booking-card:hover { transform: translateY(-5px); box-shadow:0 8px 20px rgba(0,0,0,0.12); }
+
+/* Card Images & Profile Pics */
+.service-card img, .pro-card img, .booking-card img, 
+.profile-pic, .dashboard-pic {
+    width:60px;
+    height:60px;
+    object-fit:cover;
+    border-radius:50%;
+    border:2px solid #ccc;
+    transition: all var(--transition);
+}
+
+/* Larger profile for profile page */
+.profile-pic-large {
+    width:120px;
+    height:120px;
+    object-fit:cover;
+    border-radius:50%;
+    border:3px solid var(--primary);
+    margin-bottom:1rem;
+}
+
+/* ================= Buttons ================= */
+.btn, .dashboard-btn { padding:0.6rem 1.3rem; border-radius: var(--radius); font-weight:600; cursor:pointer; transition: all var(--transition); text-align:center; text-decoration:none; display:inline-block; margin:0.25rem; }
+.btn.primary, .dashboard-btn.primary { background: var(--primary); color:#fff; }
+.btn.primary:hover, .dashboard-btn.primary:hover { background: var(--secondary); }
+.btn.secondary, .dashboard-btn.secondary { background:#e0e0e0; color: var(--text); }
+.btn.secondary:hover, .dashboard-btn.secondary:hover { background:#ccc; }
+.btn.danger, .dashboard-btn.danger { background:#FF4D4F; color:#fff; }
+.btn.danger:hover, .dashboard-btn.danger:hover { background:#E33C3C; }
+
+/* ================= Tables ================= */
+.dashboard-table { width:100%; border-collapse:collapse; margin-bottom:1.5rem; }
+.dashboard-table th, .dashboard-table td { padding:0.5rem 0.75rem; border:1px solid #ddd; text-align:center; }
+.dashboard-table th { background: var(--primary); color:#fff; font-weight:600; }
+.dashboard-table td img { display:block; margin:0 auto; }
+tr:hover { background:#f9f9f9; }
+
+/* Status classes */
+.status-active { color:green; font-weight:600; }
+.status-inactive { color:red; font-weight:600; }
+
+/* ================= Forms ================= */
+.form-container { max-width:500px; margin:2rem auto; padding:2rem; background: var(--card-bg); border-radius: var(--radius); box-shadow:0 8px 25px rgba(0,0,0,0.12); transition: all var(--transition); }
+.form-container input, .form-container select, .form-container textarea { width:100%; padding:0.85rem 1rem; margin-bottom:1rem; border-radius: var(--radius); border:1px solid #ccc; font-size:1rem; transition: all var(--transition); }
+.form-container input:focus, .form-container select:focus, .form-container textarea:focus { border-color: var(--primary); outline:none; }
+.form-container button { width:100%; padding:0.9rem; border:none; border-radius: var(--radius); background: var(--primary); color:#fff; font-weight:600; font-size:1rem; cursor:pointer; transition: all var(--transition); }
+.form-container button:hover { background: var(--secondary); }
+.form-container label { display:block; margin-bottom:0.5rem; font-weight:500; }
+.form-container h2 { text-align:center; margin-bottom:2rem; font-weight:700; color: var(--primary); font-size:2rem; }
+.success { color:green; }
+.error { color:red; }
+
+/* ================= Profile Page ================= */
+.profile-page { max-width:900px; margin:2rem auto; padding:2rem; display:flex; flex-direction:column; align-items:center; text-align:center; }
+
+/* ================= Modals ================= */
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:10000; }
+.modal-content { background: var(--card-bg); padding:2rem; border-radius: var(--radius); max-width:500px; width:90%; box-shadow:0 8px 25px rgba(0,0,0,0.15); }
+.modal.show { display:flex; }
+
+/* ================= Footer ================= */
+footer { text-align:center; padding:2rem; background: var(--primary); color:#fff; margin-top:2rem; }
+
+/* ================= Responsive ================= */
+@media(max-width:1024px){
+    .dashboard-container, .admin-dashboard, .features, .cards-container { flex-direction:column; }
+    .sidebar, .main-content { min-width:100%; }
+}
+@media(max-width:768px){
+    .search-form { flex-direction:column; }
+    .search-form input, .search-form select, .search-form button { width:100%; border-radius: var(--radius); margin-bottom:0.5rem; }
+    .cards-container, .features { align-items:center; }
+    .service-card, .pro-card, .booking-card { width:90%; }
+}
