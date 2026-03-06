@@ -59,6 +59,6 @@ Frontend: HTML, CSS (Modern UI v7), JavaScript
 
 Backend: PHP, MySQL
 
-Hosting: InfinityFree: serviceconnect.great-site.net
+[ServiceConnect Live Demo](https://serviceconnect.great-site.net)
 
 Version Control: GitHub
