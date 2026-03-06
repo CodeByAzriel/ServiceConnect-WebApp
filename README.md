@@ -19,7 +19,8 @@ User Registration & Login 🔑
 
 Users can register as service providers or clients.
 
-Admin account for managing the platform (dylan@serviceconnect.com / Admin@2026).
+login as the admin 
+Admin account details for managing the platform: (dylan@serviceconnect.com / Admin@2026).
 
 Service Listings & Booking 📋
 
