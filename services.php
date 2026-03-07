@@ -1,23 +1,28 @@
 <?php
 session_start();
-include 'db.php'; // DB connection
+include 'db.php';
 
-// Set default current location if not set
-if(!isset($_SESSION['current_location'])){
-    $_SESSION['current_location'] = $_SESSION['home_location'] ?? null;
+/* ======================
+   HANDLE FILTER INPUTS
+====================== */
+$selectedLocation = $_GET['location'] ?? '';
+$searchQuery = $_GET['query'] ?? '';
+$categoryFilter = $_GET['category'] ?? '';
+
+/* ======================
+   GET LOCATIONS
+====================== */
+$locations = [];
+$locationResult = $conn->query("SELECT id, name FROM locations ORDER BY name ASC");
+if($locationResult){
+    while($row = $locationResult->fetch_assoc()){
+        $locations[] = $row;
+    }
 }
 
-// Handle location change via dropdown
-if(isset($_GET['location']) && !empty($_GET['location'])){
-    $_SESSION['current_location'] = $_GET['location'];
-}
-$userLocation = $_SESSION['current_location'] ?? null;
-
-// Sanitize inputs
-$categoryFilter = isset($_GET['category']) ? trim($_GET['category']) : '';
-$searchQuery = isset($_GET['query']) ? trim($_GET['query']) : '';
-
-// Fetch categories
+/* ======================
+   GET CATEGORIES
+====================== */
 $categories = [];
 $catResult = $conn->query("SELECT id, name FROM categories ORDER BY name ASC");
 if($catResult){
@@ -26,73 +31,76 @@ if($catResult){
     }
 }
 
-// Fetch distinct locations for dropdown
-$locations = [];
-$locationResult = $conn->query("SELECT DISTINCT location FROM users WHERE location IS NOT NULL ORDER BY location ASC");
-if($locationResult){
-    while($row = $locationResult->fetch_assoc()){
-        $locations[] = $row['location'];
-    }
-}
-
-// Build base SQL
-$sql = "SELECT s.id, s.title, s.description, s.price, s.skill_level, s.category,
-               u.name AS provider_name, u.profile_pic, u.location
-        FROM services s
-        JOIN users u ON s.user_id = u.id
-        WHERE s.status='active'";
+/* ======================
+   BUILD SERVICE QUERY
+====================== */
+$sql = "
+SELECT
+    s.id,
+    s.title,
+    s.description,
+    s.price,
+    s.skill_level,
+    s.category,
+    u.name AS provider_name,
+    u.profile_pic,
+    l.name AS location_name,
+    l.id AS location_id
+FROM services s
+JOIN users u ON s.user_id = u.id
+JOIN locations l ON u.location_id = l.id
+WHERE s.status='active'
+";
 
 $params = [];
-$paramTypes = '';
+$types = "";
 
-// Location filter
-if(!empty($userLocation)){
-    $sql .= " AND u.location = ?";
-    $paramTypes .= 's';
-    $params[] = $userLocation;
+/* LOCATION FILTER */
+if(!empty($selectedLocation)){
+    $sql .= " AND l.id = ?";
+    $types .= "i";
+    $params[] = $selectedLocation;
 }
 
-// Category filter
+/* CATEGORY FILTER */
 if(!empty($categoryFilter)){
-    $sql .= " AND s.category LIKE ?";
-    $paramTypes .= 's';
-    $params[] = "%$categoryFilter%";
+    $sql .= " AND s.category = ?";
+    $types .= "s";
+    $params[] = $categoryFilter;
 }
 
-// Search filter
+/* SEARCH FILTER */
 if(!empty($searchQuery)){
     $sql .= " AND (s.title LIKE ? OR s.description LIKE ?)";
-    $paramTypes .= 'ss';
+    $types .= "ss";
     $params[] = "%$searchQuery%";
     $params[] = "%$searchQuery%";
 }
 
 $sql .= " ORDER BY s.created_at DESC";
 
-// Prepare statement
+/* ======================
+   EXECUTE QUERY
+====================== */
 $stmt = $conn->prepare($sql);
-if($stmt === false){
-    die("Prepare failed: " . $conn->error);
+if($params){
+    $stmt->bind_param($types, ...$params);
 }
-
-// Bind params dynamically
-if(count($params) > 0){
-    $refs = [];
-    foreach($params as $key => $value){
-        $refs[$key] = &$params[$key];
-    }
-    array_unshift($refs, $paramTypes);
-    call_user_func_array([$stmt, 'bind_param'], $refs);
-}
-
 $stmt->execute();
-$serviceResult = $stmt->get_result();
+$result = $stmt->get_result();
 
+/* ======================
+   FETCH SERVICES
+====================== */
 $services = [];
-while($row = $serviceResult->fetch_assoc()){
-    // Get average rating
+while($row = $result->fetch_assoc()){
     $srvId = $row['id'];
-    $ratingResult = $conn->query("SELECT AVG(rating) AS avg_rating, COUNT(*) AS total_reviews FROM reviews WHERE service_id=$srvId");
+    $ratingResult = $conn->query("
+        SELECT AVG(rating) AS avg_rating,
+               COUNT(*) AS total_reviews
+        FROM reviews
+        WHERE service_id = $srvId
+    ");
     $ratingData = $ratingResult->fetch_assoc();
     $row['avg_rating'] = $ratingData['avg_rating'] ?? 0;
     $row['total_reviews'] = $ratingData['total_reviews'] ?? 0;
@@ -100,7 +108,6 @@ while($row = $serviceResult->fetch_assoc()){
     $services[] = $row;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -110,13 +117,11 @@ while($row = $serviceResult->fetch_assoc()){
 <link rel="stylesheet" href="css/style.css">
 <style>
 /* ===========================
-   Modern Services Page UI
+   Modern Services Page UI 2026
 =========================== */
-
-/* Page layout */
 body {
     font-family: 'Poppins', sans-serif;
-    background: #f3f4f6;
+    background: #f5f5f7;
     margin: 0;
     padding: 0;
     color: #1f2937;
@@ -128,11 +133,10 @@ body {
     padding: 40px 20px;
 }
 
-/* Title */
 .services-page h1 {
     text-align: center;
     font-size: 2.5rem;
-    font-weight: 600;
+    font-weight: 700;
     margin-bottom: 30px;
     color: #4f46e5;
 }
@@ -149,16 +153,17 @@ body {
 .search-form select,
 .search-form input {
     padding: 12px 15px;
-    border-radius: 12px;
+    border-radius: 15px;
     border: 1px solid #ddd;
     font-size: 14px;
     outline: none;
-    transition: 0.3s;
+    transition: all 0.3s ease;
 }
 
 .search-form select:hover,
 .search-form input:hover {
     border-color: #4f46e5;
+    box-shadow: 0 0 8px rgba(79,70,229,0.2);
 }
 
 .search-form button {
@@ -166,14 +171,15 @@ body {
     color: #fff;
     border: none;
     padding: 12px 25px;
-    border-radius: 12px;
-    font-weight: 500;
+    border-radius: 15px;
+    font-weight: 600;
     cursor: pointer;
-    transition: 0.3s;
+    transition: all 0.3s ease;
 }
 
 .search-form button:hover {
     background: #3730a3;
+    box-shadow: 0 5px 15px rgba(55,48,163,0.2);
 }
 
 /* Cards Grid */
@@ -185,9 +191,9 @@ body {
 
 /* Individual Card */
 .service-card {
-    background: linear-gradient(135deg, #ffffff, #f9fafb);
-    border-radius: 18px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.07);
     padding: 25px;
     display: flex;
     flex-direction: column;
@@ -196,8 +202,8 @@ body {
 }
 
 .service-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
 }
 
 /* Provider Pic */
@@ -237,10 +243,10 @@ body {
     padding: 10px 20px;
     font-size: 0.95rem;
     font-weight: 500;
-    border-radius: 12px;
+    border-radius: 15px;
     cursor: pointer;
     border: none;
-    transition: 0.3s;
+    transition: all 0.3s ease;
 }
 
 .service-card .btn.primary {
@@ -250,6 +256,7 @@ body {
 
 .service-card .btn.primary:hover {
     background: #3730a3;
+    box-shadow: 0 6px 15px rgba(55,48,163,0.2);
 }
 
 /* Rating Stars */
@@ -270,67 +277,74 @@ body {
 </style>
 </head>
 <body>
-
 <?php include 'header.php'; ?>
 
 <section class="services-page">
-    <h1>Services in <?= htmlspecialchars($userLocation ?? 'All Locations'); ?></h1>
+<h1>Services in <?= htmlspecialchars($selectedLocation ?? 'All Locations'); ?></h1>
 
-    <form method="GET" class="search-form">
-        <select name="location">
-            <option value="">-- Select Location --</option>
-            <?php foreach($locations as $loc): ?>
-                <option value="<?= htmlspecialchars($loc); ?>" <?= ($loc==$userLocation) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($loc); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <input type="text" name="query" placeholder="Search services..." value="<?= htmlspecialchars($searchQuery); ?>">
-
-        <select name="category">
-            <option value="">All Categories</option>
-            <?php foreach($categories as $cat): ?>
-                <option value="<?= htmlspecialchars($cat['name']); ?>" <?= ($cat['name']==$categoryFilter) ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($cat['name']); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-
-        <button type="submit" class="btn primary">Search</button>
-    </form>
-
-    <div class="cards-container">
-        <?php if(!empty($services)): ?>
-            <?php foreach($services as $service): ?>
-                <div class="service-card">
-                    <div class="provider-pic">
-                        <?php if(!empty($service['profile_pic'])): ?>
-                            <img src="<?= htmlspecialchars($service['profile_pic']); ?>" alt="<?= htmlspecialchars($service['provider_name']); ?>">
-                        <?php else: ?>
-                            <img src="https://randomuser.me/api/portraits/<?= rand(0,1) ? 'men' : 'women'; ?>/<?= rand(1,99); ?>.jpg" alt="<?= htmlspecialchars($service['provider_name']); ?>">
-                        <?php endif; ?>
-                    </div>
-                    <h3><?= htmlspecialchars($service['title']); ?></h3>
-                    <p><?= htmlspecialchars($service['description']); ?></p>
-                    <p><strong>Price:</strong> R<?= number_format($service['price'],2); ?></p>
-                    <p><strong>Provider:</strong> <?= htmlspecialchars($service['provider_name']); ?> (Skill: <?= htmlspecialchars($service['skill_level']); ?>)</p>
-                    <p><strong>Category:</strong> <?= htmlspecialchars($service['category']); ?></p>
-                    
-                    <?php if(isset($_SESSION['user_id'])): ?>
-                        <form method="POST" action="book.php">
-                            <input type="hidden" name="service_id" value="<?= $service['id']; ?>">
-                            <button type="submit" name="book_service" class="btn primary">Book Now (Pay at Service)</button>
-                        </form>
-                  <?php else: ?>
-    <a href="login.php" class="btn primary">Login to Book</a>
+<?php if(isset($_SESSION['user_id'])): ?>
+<div style="text-align:center; margin-bottom:20px;">
+<a href="add_service.php" class="btn primary">+ Add Your Service</a>
+</div>
 <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <p>No services found matching your search or location.</p>
-        <?php endif; ?>
-    </div>
+
+<form method="GET" class="search-form">
+<select name="location">
+<option value="">All Locations</option>
+<?php foreach($locations as $loc): ?>
+<option value="<?= $loc['id']; ?>" <?= ($selectedLocation == $loc['id']) ? 'selected' : '' ?>>
+<?= htmlspecialchars($loc['name']); ?>
+</option>
+<?php endforeach; ?>
+</select>
+
+<input type="text" name="query" placeholder="Search services..." value="<?= htmlspecialchars($searchQuery); ?>">
+
+<select name="category">
+<option value="">All Categories</option>
+<?php foreach($categories as $cat): ?>
+<option value="<?= htmlspecialchars($cat['name']); ?>" <?= ($categoryFilter == $cat['name']) ? 'selected' : '' ?>>
+<?= htmlspecialchars($cat['name']); ?>
+</option>
+<?php endforeach; ?>
+</select>
+
+<button type="submit" class="btn primary">Search</button>
+</form>
+
+<div class="cards-container">
+<?php if(!empty($services)): ?>
+<?php foreach($services as $service): ?>
+<div class="service-card">
+<div class="provider-pic">
+<?php if(!empty($service['profile_pic'])): ?>
+<img src="<?= htmlspecialchars($service['profile_pic']); ?>" alt="<?= htmlspecialchars($service['provider_name']); ?>">
+<?php else: ?>
+<img src="https://randomuser.me/api/portraits/<?= rand(0,1)?'men':'women'; ?>/<?= rand(1,99); ?>.jpg" alt="<?= htmlspecialchars($service['provider_name']); ?>">
+<?php endif; ?>
+</div>
+
+<h3><?= htmlspecialchars($service['title']); ?></h3>
+<p><?= htmlspecialchars($service['description']); ?></p>
+<p><strong>Price:</strong> R<?= number_format($service['price'],2); ?></p>
+<p><strong>Provider:</strong> <?= htmlspecialchars($service['provider_name']); ?></p>
+<p><strong>Location:</strong> <?= htmlspecialchars($service['location_name']); ?></p>
+<p><strong>Category:</strong> <?= htmlspecialchars($service['category']); ?></p>
+
+<?php if(isset($_SESSION['user_id'])): ?>
+<form method="POST" action="book.php">
+<input type="hidden" name="service_id" value="<?= $service['id']; ?>">
+<button type="submit" name="book_service" class="btn primary">Book Now (Pay at Service)</button>
+</form>
+<?php else: ?>
+<a href="login.php" class="btn primary">Login to Book</a>
+<?php endif; ?>
+</div>
+<?php endforeach; ?>
+<?php else: ?>
+<p>No services found matching your search or location.</p>
+<?php endif; ?>
+</div>
 </section>
 
 <?php include 'footer.php'; ?>
